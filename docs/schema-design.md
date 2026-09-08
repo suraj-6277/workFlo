@@ -246,3 +246,4 @@ In the earlier prototype ("Zentra"), `workspace.owner` was assigned the `_id` of
    });
    ```
 3. TypeScript compiler + Zod validation will reject any payload attempting to pass a non-User identifier.
+
