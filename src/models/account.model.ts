@@ -39,7 +39,7 @@ const accountSchema = new Schema<IAccountDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform: (_doc, ret) => {
+      transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.passwordHash;
         delete ret.__v;
         return ret;
@@ -48,8 +48,6 @@ const accountSchema = new Schema<IAccountDocument>(
   },
 );
 
-// Compound unique index: a providerAccountId can only exist once per provider
 accountSchema.index({ provider: 1, providerAccountId: 1 }, { unique: true });
 
 export const Account = mongoose.model<IAccountDocument>('Account', accountSchema);
-

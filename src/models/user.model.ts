@@ -39,7 +39,7 @@ const userSchema = new Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform: (_doc, ret) => {
+      transform: (_doc, ret: Record<string, unknown>) => {
         delete ret.__v;
         return ret;
       },
@@ -47,8 +47,6 @@ const userSchema = new Schema<IUserDocument>(
   },
 );
 
-// Explicit index for fast lookups
 userSchema.index({ email: 1 }, { unique: true });
 
 export const User = mongoose.model<IUserDocument>('User', userSchema);
-
