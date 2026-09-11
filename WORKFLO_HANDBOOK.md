@@ -439,3 +439,4 @@ flowchart TD
 | **Start Background Worker:** | `npm run dev:worker` (Listens to BullMQ queues) |
 | **Default Test Credentials:** | Email: `suraj@example.com` / Password: `SecurePass123!` |
 | **Trigger Test Notification:**| Open bell icon 🔔 on frontend and click **"Test Alert"** |
+
