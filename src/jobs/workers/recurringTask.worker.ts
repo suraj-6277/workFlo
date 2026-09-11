@@ -96,3 +96,4 @@ export const initRecurringTaskWorker = (): Worker<RecurringJobData> => {
 
   return worker;
 };
+

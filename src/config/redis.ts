@@ -14,6 +14,14 @@ const realRedis = new Redis(env.REDIS_URL, {
 const mockRedis = new (RedisMock as unknown as typeof Redis)();
 let useMock = false;
 
+realRedis.on('error', (err) => {
+  if (useMock) return;
+  logger.debug(`Redis connection notice: ${err.message}`);
+});
+
+let realRedisConnected = false;
+export const isRealRedisAvailable = (): boolean => realRedisConnected;
+
 // Transparent proxy: commands go to real Redis if online, or in-memory mock if offline in development
 export const redisClient = new Proxy(realRedis, {
   get(target, prop, receiver) {
@@ -29,8 +37,10 @@ export const redisClient = new Proxy(realRedis, {
 export const connectRedis = async (): Promise<void> => {
   try {
     await realRedis.connect();
+    realRedisConnected = true;
     logger.info('⚡ Real Redis connected successfully on port 6379');
   } catch (error) {
+    realRedisConnected = false;
     if (env.NODE_ENV === 'development') {
       useMock = true;
       logger.warn('⚠️ Real Redis server not detected on localhost:6379.');

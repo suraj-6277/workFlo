@@ -66,3 +66,4 @@ export class NotificationService {
     await Notification.updateMany({ recipientId, isRead: false }, { isRead: true });
   }
 }
+

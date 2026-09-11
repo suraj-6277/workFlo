@@ -83,3 +83,4 @@ export const initDueDateReminderWorker = (): Worker<DueDateJobData> => {
 
   return worker;
 };
+

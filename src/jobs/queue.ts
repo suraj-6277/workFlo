@@ -15,6 +15,12 @@ export const dueDateReminderQueue = new Queue('due-date-reminders', {
   },
 });
 
+dueDateReminderQueue.on('error', (err) => {
+  // Gracefully handle queue connection warnings without crashing server
+  if (err.message.includes('ECONNREFUSED')) return;
+  console.warn(`[BullMQ:due-date-reminders] ${err.message}`);
+});
+
 // 2. Queue for recurring task cloning & scheduling
 export const recurringTaskQueue = new Queue('recurring-tasks', {
   connection: redisClient,
@@ -28,3 +34,9 @@ export const recurringTaskQueue = new Queue('recurring-tasks', {
     removeOnFail: 500,
   },
 });
+
+recurringTaskQueue.on('error', (err) => {
+  if (err.message.includes('ECONNREFUSED')) return;
+  console.warn(`[BullMQ:recurring-tasks] ${err.message}`);
+});
+
