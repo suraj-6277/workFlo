@@ -3,18 +3,30 @@ import { User, Workspace, Project, Task, Notification, TaskStatus } from '../typ
 const API_BASE = '/api/v1';
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    credentials: 'include', // essential for session cookie
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      credentials: 'include', // essential for session cookie
+    });
+  } catch {
+    throw new Error('Could not reach backend server at http://localhost:5000. Please ensure it is running.');
+  }
 
-  const json = await res.json();
+  const text = await res.text();
+  let json: any = {};
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(`Server returned non-JSON response (${res.status} ${res.statusText})`);
+  }
+
   if (!res.ok) {
-    const errorMsg = json.errors?.[0]?.message || json.message || 'Request failed';
+    const errorMsg = json.errors?.[0]?.message || json.message || `Request failed (${res.status})`;
     throw new Error(errorMsg);
   }
 
