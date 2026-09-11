@@ -4,6 +4,7 @@ import { Project } from '../models/project.model';
 import { Member } from '../models/member.model';
 import { AppError } from '../utils/appError';
 import { CreateTaskInput, UpdateTaskInput, QueryTaskInput } from '../validations/task.validation';
+import { TaskScheduler } from '../jobs/schedulers/recurringTask.scheduler';
 
 export class TaskService {
   /**
@@ -56,7 +57,7 @@ export class TaskService {
       };
     }
 
-    return Task.create({
+    const task = await Task.create({
       ...input,
       workspaceId: new mongoose.Types.ObjectId(workspaceId),
       projectId: new mongoose.Types.ObjectId(input.projectId),
@@ -64,6 +65,26 @@ export class TaskService {
       createdBy,
       recurrenceRule,
     });
+
+    // Automatically schedule BullMQ jobs
+    if (task.dueDate && task.assignedTo) {
+      await TaskScheduler.scheduleDueDateReminder(
+        task._id.toString(),
+        workspaceId,
+        task.assignedTo.toString(),
+        task.dueDate,
+      );
+    }
+
+    if (task.isRecurring && recurrenceRule) {
+      await TaskScheduler.registerRecurringTask(
+        task._id.toString(),
+        recurrenceRule.frequency,
+        recurrenceRule.interval,
+      );
+    }
+
+    return task;
   }
 
   /**
@@ -141,6 +162,10 @@ export class TaskService {
       throw AppError.notFound('Task not found in this workspace');
     }
 
+    if (task.status === 'DONE') {
+      await TaskScheduler.cancelReminderJob(taskId);
+    }
+
     return task;
   }
 
@@ -152,6 +177,8 @@ export class TaskService {
     if (!task) {
       throw AppError.notFound('Task not found in this workspace');
     }
+
+    await TaskScheduler.cancelReminderJob(taskId);
   }
 
   /**
@@ -183,3 +210,4 @@ export class TaskService {
     };
   }
 }
+

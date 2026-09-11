@@ -151,6 +151,19 @@
             <button class="btn btn-success" onclick="handleGetAnalytics()">Workspace Analytics</button>
           </div>
         </div>
+
+        <!-- 5. In-App Notifications Feed (Phase 7 Automation) -->
+        <div class="card">
+          <div class="card-title">
+            <span>5. Notifications & Alerts (BullMQ Automation)</span>
+            <span class="tag">Phase 7</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" onclick="handleGetNotifications()">Fetch My Notifications</button>
+            <button class="btn btn-secondary" onclick="handleMarkAllRead()">Mark All Read</button>
+          </div>
+          <div id="notifDisplay" style="margin-top: 10px; max-height: 140px; overflow-y: auto; font-size: 12px;"></div>
+        </div>
       </div>
 
       <!-- Right Inspector -->
@@ -303,6 +316,30 @@
       const res = await fetch(`/api/v1/workspaces/${wsId}/tasks/analytics`, { credentials: 'include' });
       const data = await res.json();
       log({ status: res.status, data }, 'Computed real-time MongoDB aggregation breakdown by status & priority.');
+    }
+
+    async function handleGetNotifications() {
+      const res = await fetch('/api/v1/notifications', { credentials: 'include' });
+      const data = await res.json();
+      const notifs = data.data?.notifications || [];
+      const display = document.getElementById('notifDisplay');
+      if (notifs.length === 0) {
+        display.innerHTML = '<span style="color: var(--text-muted);">No notifications yet. Create a task with due date to trigger reminders!</span>';
+      } else {
+        display.innerHTML = notifs.map(n => `
+          <div style="background: #1e293b; border: 1px solid ${n.isRead ? '#334155' : '#6366f1'}; border-radius: 4px; padding: 6px 8px; margin-bottom: 4px;">
+            <b>${n.title}</b>: ${n.message}
+          </div>
+        `).join('');
+      }
+      log({ status: res.status, data }, 'Retrieved notifications triggered by background BullMQ automation.');
+    }
+
+    async function handleMarkAllRead() {
+      const res = await fetch('/api/v1/notifications/read-all', { method: 'PATCH', credentials: 'include' });
+      const data = await res.json();
+      log({ status: res.status, data }, 'All notifications marked as read.');
+      handleGetNotifications();
     }
   </script>
 </body>

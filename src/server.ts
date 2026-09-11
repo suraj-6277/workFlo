@@ -11,6 +11,7 @@ import { connectDatabase } from './config/database';
 import { connectRedis, redisClient } from './config/redis';
 import authRoutes from './routes/auth.route';
 import workspaceRoutes from './routes/workspace.route';
+import notificationRoutes from './routes/notification.route';
 import { errorHandler } from './middlewares/error.middleware';
 import { AppError } from './utils/appError';
 
@@ -78,6 +79,7 @@ app.get('/health', (_req, res) => {
 // Mount Feature Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/workspaces', workspaceRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Catch-all for undefined routes
 app.all('*', (req, _res, next) => {
