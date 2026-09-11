@@ -1,42 +1,53 @@
 import Redis from 'ioredis';
+import RedisMock from 'ioredis-mock';
 import { env } from './env';
 import { logger } from '../utils/logger';
 
-// BullMQ and connect-redis recommend `maxRetriesPerRequest: null` for blocking queue commands
-export const redisClient = new Redis(env.REDIS_URL, {
+const realRedis = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   lazyConnect: true,
+  connectTimeout: 2000,
+  retryStrategy: () => null,
 });
 
-redisClient.on('connect', () => {
-  logger.info('⚡ Redis connection initialized');
-});
+const mockRedis = new (RedisMock as unknown as typeof Redis)();
+let useMock = false;
 
-redisClient.on('ready', () => {
-  logger.info('⚡ Redis is ready to accept commands');
-});
-
-redisClient.on('error', (err) => {
-  logger.error(`❌ Redis error: ${err.message}`);
-});
-
-redisClient.on('close', () => {
-  logger.warn('⚠️ Redis connection closed');
-});
+// Transparent proxy: commands go to real Redis if online, or in-memory mock if offline in development
+export const redisClient = new Proxy(realRedis, {
+  get(target, prop, receiver) {
+    const active = useMock ? mockRedis : target;
+    const value = Reflect.get(active, prop, receiver);
+    if (typeof value === 'function') {
+      return value.bind(active);
+    }
+    return value;
+  },
+}) as Redis;
 
 export const connectRedis = async (): Promise<void> => {
   try {
-    await redisClient.connect();
+    await realRedis.connect();
+    logger.info('⚡ Real Redis connected successfully on port 6379');
   } catch (error) {
-    logger.error('❌ Failed to connect to Redis initially:');
+    if (env.NODE_ENV === 'development') {
+      useMock = true;
+      logger.warn('⚠️ Real Redis server not detected on localhost:6379.');
+      logger.info('⚡ Switched seamlessly to in-memory Redis for local development & UI testing!');
+      return;
+    }
+    logger.error('❌ Failed to connect to Redis:');
     logger.error(error);
     process.exit(1);
   }
 };
 
 export const disconnectRedis = async (): Promise<void> => {
-  await redisClient.quit();
+  if (useMock) {
+    await mockRedis.quit();
+  } else {
+    await realRedis.quit();
+  }
   logger.info('⚡ Redis disconnected gracefully');
 };
-

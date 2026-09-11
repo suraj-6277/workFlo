@@ -16,7 +16,11 @@ import { AppError } from './utils/appError';
 const app = express();
 
 // Security HTTP headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // allow inline scripts for local dev testbench
+  }),
+);
 
 // CORS configuration
 app.use(
@@ -30,6 +34,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Serve static interactive dev testbench
+app.use(express.static('public'));
 
 // Initialize Redis Session Store
 const redisStore = new RedisStore({
@@ -84,7 +91,8 @@ const startServer = async (): Promise<void> => {
   await connectRedis();
 
   app.listen(env.PORT, () => {
-    logger.info(`🚀 Workflo API server listening on port ${env.PORT} in ${env.NODE_ENV} mode`);
+    logger.info(`🚀 Workflo API server listening on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`);
+    logger.info(`🌐 Interactive Dev Web Testbench is live at: http://localhost:${env.PORT}`);
   });
 };
 
