@@ -29,5 +29,21 @@ export class NotificationController {
       next(error);
     }
   }
+
+  public static async triggerTestNotification(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.user!;
+      const notification = await NotificationService.createNotification(
+        user._id,
+        user._id, // fallback workspace id
+        'DUE_DATE_REMINDER',
+        '🔔 BullMQ System Alert: Test Notification',
+        `Live alert triggered at ${new Date().toLocaleTimeString()}. Notification delivery pipeline is active and healthy!`,
+      );
+      sendSuccess(res, 'Test notification triggered successfully', { notification }, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

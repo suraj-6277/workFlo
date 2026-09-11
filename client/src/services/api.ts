@@ -115,4 +115,7 @@ export const api = {
 
   markAllNotificationsRead: () =>
     request<void>('/notifications/read-all', { method: 'PATCH' }),
+
+  triggerTestNotification: () =>
+    request<{ notification: Notification }>('/notifications/test', { method: 'POST' }),
 };

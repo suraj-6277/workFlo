@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Notification } from '../types';
 import { api } from '../services/api';
-import { Bell, Check, Clock } from 'lucide-react';
+import { Bell, Check, Clock, Sparkles } from 'lucide-react';
 
 interface Props {
   notifications: Notification[];
@@ -14,9 +14,23 @@ export const NotificationDrawer: React.FC<Props> = ({
   onRefresh,
   onClose,
 }) => {
+  const [triggering, setTriggering] = useState(false);
+
   const handleMarkAllRead = async () => {
     await api.markAllNotificationsRead();
     onRefresh();
+  };
+
+  const handleTriggerTest = async () => {
+    setTriggering(true);
+    try {
+      await api.triggerTestNotification();
+      onRefresh();
+    } catch (err) {
+      console.error('Failed to trigger test notification:', err);
+    } finally {
+      setTriggering(false);
+    }
   };
 
   return (
@@ -50,27 +64,58 @@ export const NotificationDrawer: React.FC<Props> = ({
             {notifications.filter((n) => !n.isRead).length}
           </span>
         </div>
-        <button
-          onClick={handleMarkAllRead}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#818cf8',
-            fontSize: 12,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-          }}
-        >
-          <Check size={14} /> Mark all read
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={handleTriggerTest}
+            disabled={triggering}
+            style={{
+              background: 'rgba(99, 102, 241, 0.15)',
+              border: '1px solid #6366f1',
+              color: '#818cf8',
+              borderRadius: 6,
+              padding: '3px 8px',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: triggering ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title="Fire a live BullMQ test notification"
+          >
+            <Sparkles size={12} /> {triggering ? 'Sending...' : 'Test Alert'}
+          </button>
+          <button
+            onClick={handleMarkAllRead}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              fontSize: 12,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <Check size={14} /> Mark read
+          </button>
+        </div>
       </div>
 
       <div style={{ maxHeight: 360, overflowY: 'auto' }}>
         {notifications.length === 0 ? (
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
-            No notifications yet
+          <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748b', fontSize: 13 }}>
+            <p style={{ marginBottom: 12 }}>No notifications yet.</p>
+            <button
+              onClick={handleTriggerTest}
+              disabled={triggering}
+              className="btn btn-primary"
+              style={{ fontSize: 12, padding: '6px 14px', margin: '0 auto' }}
+            >
+              <Sparkles size={13} style={{ marginRight: 4 }} />
+              {triggering ? 'Firing Alert...' : 'Send First Test Alert'}
+            </button>
           </div>
         ) : (
           notifications.map((n) => (

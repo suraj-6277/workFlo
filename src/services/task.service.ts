@@ -5,6 +5,7 @@ import { Member } from '../models/member.model';
 import { AppError } from '../utils/appError';
 import { CreateTaskInput, UpdateTaskInput, QueryTaskInput } from '../validations/task.validation';
 import { TaskScheduler } from '../jobs/schedulers/recurringTask.scheduler';
+import { NotificationService } from './notification.service';
 
 export class TaskService {
   /**
@@ -81,6 +82,28 @@ export class TaskService {
         task._id.toString(),
         recurrenceRule.frequency,
         recurrenceRule.interval,
+      );
+
+      // Create in-app notification confirming recurring registration
+      await NotificationService.createNotification(
+        createdBy,
+        new mongoose.Types.ObjectId(workspaceId),
+        'RECURRING_TASK_CREATED',
+        `🔁 Recurring Task Configured: "${task.title}"`,
+        `BullMQ automation template registered with ${recurrenceRule.frequency} interval.`,
+        task._id as mongoose.Types.ObjectId,
+      );
+    }
+
+    // If task was assigned to someone else, notify them
+    if (task.assignedTo && !task.assignedTo.equals(createdBy)) {
+      await NotificationService.createNotification(
+        task.assignedTo,
+        new mongoose.Types.ObjectId(workspaceId),
+        'TASK_ASSIGNED',
+        `📌 New Task Assigned: "${task.title}"`,
+        `You were assigned a new task in this workspace.`,
+        task._id as mongoose.Types.ObjectId,
       );
     }
 
