@@ -26,6 +26,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   if (!res.ok) {
+    if (
+      res.status === 401 &&
+      !endpoint.includes('/auth/login') &&
+      !endpoint.includes('/auth/register') &&
+      !endpoint.includes('/auth/me')
+    ) {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    }
     const errorMsg = json.errors?.[0]?.message || json.message || `Request failed (${res.status})`;
     throw new Error(errorMsg);
   }

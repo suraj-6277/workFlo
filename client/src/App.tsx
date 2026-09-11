@@ -30,7 +30,7 @@ export function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
-  // 1. Initial Auth Check
+  // 1. Initial Auth Check & Unauthorized Session Expiration Listener
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -43,6 +43,12 @@ export function App() {
       }
     };
     checkAuth();
+
+    const handleUnauthorized = () => {
+      setUser(null);
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
   // 2. Load Workspaces when user logs in
