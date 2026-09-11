@@ -109,7 +109,6 @@ flowchart TD
 workFlo/
 ├── package.json                      # Root scripts and production/dev dependencies
 ├── tsconfig.json                     # Strict TypeScript configuration
-├── ARCHITECTURE.md                   # Core architectural contract
 ├── docs/schema-design.md             # In-depth MongoDB schema documentation & ER diagrams
 │
 ├── src/                              # Backend TypeScript Source Code
@@ -241,7 +240,6 @@ All responses follow the standard JSON envelope:
 
 ## 📖 Additional Documentation
 * **[docs/schema-design.md](docs/schema-design.md):** Database schema, entity relationships, compound indexes, and cascade delete rules.
-* **[ARCHITECTURE.md](ARCHITECTURE.md):** Architectural decisions, contracts, and prototype post-mortem.
 
 ---
 
